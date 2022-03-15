@@ -35,6 +35,7 @@ class BasePwCpInputGenerator(CalcJob):
     _DATAFILE_XML_PRE_6_2 = 'data-file.xml'
     _DATAFILE_XML_POST_6_2 = 'data-file-schema.xml'
     _ENVIRON_INPUT_FILE_NAME = 'environ.in'
+    _DIRECT_MINIMIZATION_OUT_FILE = 'nlcg.out'
     _DEFAULT_IBRAV = 0
 
     # A mapping {flag_name: help_string} of parallelization flags
@@ -294,6 +295,8 @@ class BasePwCpInputGenerator(CalcJob):
         calcinfo.retrieve_list.extend(self.xml_filepaths)
         calcinfo.retrieve_list += settings.pop('ADDITIONAL_RETRIEVE_LIST', [])
         calcinfo.retrieve_list += self._internal_retrieve_list
+        if 'DIRECT_MINIMIZATION' in self.inputs.parameters.get_dict():
+            calcinfo.retrieve_list.append(self._DIRECT_MINIMIZATION_OUT_FILE)
 
         # Retrieve the k-point directories with the xml files to the temporary folder
         # to parse the band eigenvalues and occupations but not to have to save the raw files
@@ -689,6 +692,18 @@ class BasePwCpInputGenerator(CalcJob):
                     'Unknown `calculation` value in CONTROL namelist {calculation_type}. Otherwise, specify the list of'
                     'namelists using the NAMELISTS inside the `settings` input node'
                 ) from exception
+
+        # Check if the `DIRECT_MINIMIZATION` namelist has been specified
+        if 'DIRECT_MINIMIZATION' in input_params:
+            # Must be specified directly after &ELECTRONS namelist or QE crashes
+            try:
+                el_index = namelists_toprint.index('ELECTRONS')
+            except ValueError as exc:
+                raise exceptions.InputValidationError(
+                    "Direct minimization requested but no 'ELECTRONS' namelist found."
+                ) from exc
+
+            namelists_toprint.insert(el_index + 1, 'DIRECT_MINIMIZATION')
 
         inputfile = ''
         for namelist_name in namelists_toprint:
