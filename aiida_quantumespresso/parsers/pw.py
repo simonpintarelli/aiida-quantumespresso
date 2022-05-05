@@ -65,7 +65,7 @@ class PwParser(Parser):
         structure = self.build_output_structure(parsed_structure)
         kpoints = self.build_output_kpoints(parsed_parameters, structure)
         bands = self.build_output_bands(parsed_bands, kpoints)
-        trajectory = self.build_output_trajectory(parsed_trajectory, structure)
+        trajectory = self.build_output_trajectory(parsed_trajectory, parsed_xml, structure)
 
         # Determine whether the input kpoints were defined as a mesh or as an explicit list
         try:
@@ -435,13 +435,18 @@ class PwParser(Parser):
 
         return convert_qe_to_aiida_structure(parsed_structure, self.node.inputs.structure)
 
-    @staticmethod
-    def build_output_trajectory(parsed_trajectory, structure):
+    def build_output_trajectory(self, parsed_trajectory, parsed_xml, structure):
         """Build the output trajectory from the raw parsed trajectory data.
 
         :param parsed_trajectory: the raw parsed trajectory data
+        :param parsed_xml: the parsed XML data
+        :param structure: the `StructureData` output structure
         :return: a `TrajectoryData` or None
         """
+        if 'trajectory_data' in parsed_xml:
+            for key, value in parsed_xml['trajectory_data'].items():
+                parsed_trajectory[key] = value
+
         fractional = False
 
         if 'atomic_positions_relax' in parsed_trajectory:

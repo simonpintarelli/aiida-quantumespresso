@@ -686,7 +686,7 @@ class BasePwCpInputGenerator(CalcJob):
                 ) from exception
 
             try:
-                namelists_toprint = cls._automatic_namelists[calculation_type]
+                namelists_toprint = cls._automatic_namelists[calculation_type].copy()
             except KeyError as exception:
                 raise exceptions.InputValidationError(
                     'Unknown `calculation` value in CONTROL namelist {calculation_type}. Otherwise, specify the list of'

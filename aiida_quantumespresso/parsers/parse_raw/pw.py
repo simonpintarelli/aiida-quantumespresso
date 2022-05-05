@@ -504,6 +504,8 @@ def parse_stdout(stdout, input_parameters, parser_options=None, parsed_xml=None)
     # In case, parse for them before this point.
     # Put everything in a trajectory_data dictionary
     relax_steps = stdout.split('Self-consistent Calculation')[1:]
+    if len(relax_steps) == 0:
+        relax_steps = stdout.split('running SCF ground state')[1:]
     relax_steps = [i.split('\n') for i in relax_steps]
 
     # now I create a bunch of arrays for every step.
@@ -667,7 +669,7 @@ def parse_stdout(stdout, input_parameters, parser_options=None, parsed_xml=None)
                     pass
 
             # grep energy and possibly, magnetization
-            elif '!' in line:
+            elif '!  ' in line:
                 try:
 
                     En = float(line.split('=')[1].split('Ry')[0]) * CONSTANTS.ry_to_ev
