@@ -14,6 +14,8 @@ from aiida.common.lang import classproperty
 from aiida.common.warnings import AiidaDeprecationWarning
 from aiida.plugins import DataFactory
 from qe_tools.converters import get_parameters_from_cell
+import tempfile, json
+SinglefileData = DataFactory('singlefile')
 
 from aiida_quantumespresso.utils.convert import convert_input_to_namelist_entry
 
@@ -139,6 +141,10 @@ class BasePwCpInputGenerator(CalcJob):
             ),
             validator=cls._validate_parallelization
         )
+        spec.input('sirius_cfg',
+                   valid_type=orm.Dict,
+                   required=False,
+                   help='tweak sirius internals')
 
     @classmethod
     def _validate_parallelization(cls, value, port_namespace):  # pylint: disable=unused-argument
@@ -198,6 +204,19 @@ class BasePwCpInputGenerator(CalcJob):
             src_path = self.inputs.hubbard_file.filename
             dst_path = self.filename_input_hubbard_parameters
             local_copy_list.append((uuid, src_path, dst_path))
+
+        if 'sirius_cfg' in self.inputs:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as sirius_tmpfile:
+                # TODO: add voluptuous check
+                sirius_dict = self.inputs.sirius_cfg.get_dict()
+                # dump sirius json to tmpfile
+                json.dump(sirius_dict, sirius_tmpfile)
+                # store tmpfile
+            sirius_config = SinglefileData(file=sirius_tmpfile.name)
+            sirius_config.store()
+            local_copy_list += [
+                (sirius_config.uuid, sirius_config.filename, 'sirius.json')
+                ]
 
         arguments = [
             self.inputs.parameters,
