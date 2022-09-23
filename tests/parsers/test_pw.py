@@ -20,8 +20,8 @@ def generate_inputs(generate_structure):
         return AttributeDict({
             'structure': generate_structure(),
             'kpoints': kpoints,
-            'parameters': orm.Dict(dict=parameters),
-            'settings': orm.Dict(dict=settings),
+            'parameters': orm.Dict(parameters),
+            'settings': orm.Dict(settings),
             'metadata': metadata or {}
         })
 
@@ -98,6 +98,7 @@ def test_pw_default_no_xml(
     '200420',
     '210716',
     '211101',
+    '220603',
 ])
 def test_pw_default_xml(
     fixture_localhost, generate_calc_job_node, generate_parser, generate_inputs, data_regression, xml_format
